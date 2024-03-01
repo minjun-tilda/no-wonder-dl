@@ -91,9 +91,9 @@ class MultiHeadAttention(nn.Module):
             k[:, :, mask, :] = 0
             v[:, :, mask, :] = 0
 
-            mask = torch.FloatTensor([1 if x != mask+1 else 0 for x in range(q.shape[2])]).unsqueeze(-2).unsqueeze(1)
+            masked = torch.FloatTensor([1 if x != mask+1 else 0 for x in range(q.shape[2])]).unsqueeze(-2).unsqueeze(1)
 
-        q, attn = self.attention(q, k, v, mask=mask)
+        q, attn = self.attention(q, k, v, mask=masked)
 
         q = q.transpose(1, 2).contiguous().view(sz_b, len_q, -1)
         q = self.dropout(self.fc(q))
@@ -212,8 +212,6 @@ class FTTransformer(nn.Module):
         b = x.shape[0]
         cls_tokens = self.cls_token.repeat(b, 1, 1)
         x = torch.cat((cls_tokens, x), dim = 1)
-
-        mask = torch.FloatTensor([1 if x != mask+1 else 0 for x in range(self.input_length + 1)])
 
         x, attns = self.encoder(x, mask, True)
 
