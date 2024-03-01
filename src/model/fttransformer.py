@@ -91,7 +91,7 @@ class MultiHeadAttention(nn.Module):
             k[:, :, mask, :] = 0
             v[:, :, mask, :] = 0
 
-            mask = torch.FloatTensor([1 if x != mask+1 else 0 for x in range(q.shape[2])]).unsqueeze(1)
+            mask = torch.FloatTensor([1 if x != mask+1 else 0 for x in range(q.shape[2])]).unsqueeze(-2).unsqueeze(1)
 
         q, attn = self.attention(q, k, v, mask=mask)
 
