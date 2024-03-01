@@ -85,9 +85,13 @@ class MultiHeadAttention(nn.Module):
         v = self.w_vs(v).view(sz_b, len_v, n_head, d_v)
 
         q, k, v = q.transpose(1, 2), k.transpose(1, 2), v.transpose(1, 2)
-
+        
         if mask is not None:
-            mask = mask.unsqueeze(1)
+            q[:, :, mask, :] = 0
+            k[:, :, mask, :] = 0
+            v[:, :, mask, :] = 0
+
+            mask = torch.FloatTensor([1 if x != mask+1 else 0 for x in range(q.shape[2])]).unsqueeze(1)
 
         q, attn = self.attention(q, k, v, mask=mask)
 
