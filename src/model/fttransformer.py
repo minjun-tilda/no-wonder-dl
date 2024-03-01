@@ -20,7 +20,7 @@ class ScaledDotProductAttention(nn.Module):
     def forward(self, q, k, v, mask=None):
 
         attn = torch.matmul(q / self.temperature, k.transpose(2, 3))
-
+        
         if mask is not None:
             attn = attn.masked_fill(mask == 0, -1e9)
 
@@ -170,7 +170,7 @@ class Embedder(nn.Module):
             self.numerical_embedder = NumericalEmbedder(n_numerical, d_model)
 
 
-    def forward(self, x_categ, x_numer, mask):
+    def forward(self, x_categ, x_numer, mask=None):
         xs = []
 
         if self.n_categorical > 0:
@@ -183,12 +183,17 @@ class Embedder(nn.Module):
         
         x = torch.cat(xs, dim = 1)
 
+        if mask is not None:
+            x[:, mask, :] = 0
+
         return x
 
 # https://github.com/lucidrains/tab-transformer-pytorch/blob/main/tab_transformer_pytorch/ft_transformer.py#L113
 class FTTransformer(nn.Module):
     def __init__(self, sh_categorical, n_numerical, n_layers, n_head, d_k, d_v, d_model, d_inner, d_out):
         super().__init__()
+        self.input_length = len(sh_categorical) + n_numerical
+
         self.embedder = Embedder(sh_categorical, n_numerical, d_model)
         self.cls_token = nn.Parameter(torch.randn(1, 1, d_model))
 
@@ -197,12 +202,14 @@ class FTTransformer(nn.Module):
         self.layernorm = nn.LayerNorm(d_model)
         self.linear = nn.Linear(d_model, d_out)
 
-    def forward(self, x_categ, x_numer, mask=None, return_attns = False):
+    def forward(self, x_categ, x_numer, mask:int=None, return_attns = False):
         x = self.embedder(x_categ, x_numer, mask)
 
         b = x.shape[0]
         cls_tokens = self.cls_token.repeat(b, 1, 1)
         x = torch.cat((cls_tokens, x), dim = 1)
+
+        mask = torch.FloatTensor([1 if x != mask+1 else 0 for x in range(self.input_length + 1)])
 
         x, attns = self.encoder(x, mask, True)
 
