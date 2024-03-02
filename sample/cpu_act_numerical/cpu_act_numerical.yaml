@@ -1,0 +1,25 @@
+data_path: "sample/cpu_act_numerical/cpu_act_numerical.csv"
+target_feature: usr
+categorical_feature: null
+numerical_feature:
+  - lread
+  - lwrite
+  - scall
+  - sread
+  - swrite
+  - fork
+  - exec
+  - rchar
+  - wchar
+  - pgout
+  - ppgout
+  - pgfree
+  - pgscan
+  - atch
+  - pgin
+  - ppgin
+  - pflt
+  - vflt
+  - runqsz
+  - freemem
+  - freeswap
